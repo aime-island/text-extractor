@@ -4,4 +4,4 @@ python extractor.py \
     --root_dir "C:\Users\dmollberg\OneDrive - Deloitte (O365D)\Aime\CC_BY\bylgjan\2004\test" \
     --root_name "test" \
 
-python extractor.py --root_name "test" --root_dir "C:\Users\dmollberg\OneDrive - Deloitte (O365D)\Aime\CC_BY\bylgjan\2004\test" 
+python extractor.py --root_name "test" --root_dir "C:\Users\dmollberg\OneDrive - Deloitte (O365D)\Aime\CC_BY\bylgjan\2004\test"

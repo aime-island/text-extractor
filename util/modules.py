@@ -4,6 +4,8 @@ import PyPDF2
 from bs4 import BeautifulSoup, SoupStrainer
 import re
 import enlighten
+import objgraph
+import multiprocessing as mp
 
 
 class Counter():
@@ -26,39 +28,50 @@ def get_file_directories(args):
             counter.iterate()
             filepath_list.append(dirName + '\\' + fname)
 
+    #print('-------------------------- objgraph Show growth in file dir --------------------------')
+    #objgraph.show_growth()
+    #print('\n')        
     print(f'Found {counter.show()} files')
     create_file(filepath_list, filename=f'List of file paths for {args.root_name}.txt')
     return filepath_list
 
 def reynir_tidy_text(data):
-    #Takes a list or a string and returns a list of str with a text representation of the sentence, with correct spacing between tokens, and em- and en-dashes substituted for regular hyphens as appropriate.
-
-    list_to_return = []
+    '''
+    Takes a list or a string and returns a list of str with a text representation 
+    of the sentence, with correct spacing between tokens, and em- and en-dashes 
+    substituted for regular hyphens as appropriate. 
+    '''
+    #list_to_return = []
+    r = Reynir() 
 
     if type(data) == list:
         print('Tidying list of sentences')
 
         # Initialize Reynir and submit the text as a parse job
-        r = Reynir() 
         for line in data:
             job = r.submit(line)
 
             # Iterate through sentences and parse each one
             for item in job:
                 item.parse()
-                list_to_return.append(item.tidy_text)
+                yield(item.tidy_text)
+                #list_to_return.append(item.tidy_text)
 
     elif type(data) == str:
         print('Tidying a string')
-        r = Reynir()
         job = r.submit(data)
         for item in job:
             item.parse()
-            list_to_return.append(item.tidy_text)
+            yield(item.tidy_text)
+            #list_to_return.append(item.tidy_text)
     else:
         print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
+
     
-    return list_to_return
+    #print('-------------------------- objgraph Show growth  in reynir --------------------------')
+    #objgraph.show_growth()
+    #print('\n)
+    #return list_to_return
 
 def create_file(list_of_some_variables, filename='output.txt', mode='w'):
     #Save a list to a file. Defult is "output.txt"
@@ -70,11 +83,12 @@ def create_file(list_of_some_variables, filename='output.txt', mode='w'):
 def open_flie(filename, mode='r'):
     #Opens a file named and returns a list with irs variables.
     print(f'Opening file: {filename}')
-    list_to_return =[]
+    #list_to_return =[]
     with open(filename, mode, encoding='utf8') as file:
         for line in file:
-            list_to_return.append(line.rstrip())
-    return list_to_return   
+            #list_to_return.append(line.rstrip())
+            yield(line.rstrip())
+    #return list_to_return   
 
 def xml_extractor(file_directory):
     #print(f'Extracting sentences from {file_directory}')
@@ -85,6 +99,9 @@ def xml_extractor(file_directory):
     
     sentences = soup.find_all('s') #Beacause s contains all the sentences 
 
+    #print('-------------------------- objgraph Show growth  in xml ectractor --------------------------')
+    ##objgraph.show_growth()
+    #print('\n')    
     return [sentence.get_text().replace('\n', ' ') for sentence in sentences]
 
 def extract_multible_xml(args, data, tidy=True):
@@ -105,18 +122,17 @@ def extract_multible_xml(args, data, tidy=True):
         #Compare current subfolder to name. Given that the list_of_file_paths 
         #is linear this will create files with the names of the subfolder and
         #then reset the list_to_create      
-        if name != current_subfolder:
+        if name != current_subfolder or len(list_to_create) > 50:
             filename = '.\outPut\\' + name +'.txt'
-            create_file(list_to_create, filename)
+            create_file(list_to_create, filename, mode='a')
             list_to_create = []
             name = current_subfolder
-
-
 
         if tidy:
             list_to_create.extend(reynir_tidy_text(xml_extractor(path)))
         else:
             list_to_create.append(xml_extractor(path))
+
 
         pbar.update()
     filename = '.\outPut\\' + name +'.txt'
