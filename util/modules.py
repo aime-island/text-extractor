@@ -8,6 +8,7 @@ import objgraph
 import multiprocessing as mp
 
 
+
 class Counter():
     def __init__(self):
         self.count_object = 0
@@ -104,6 +105,17 @@ def xml_extractor(file_directory):
     #print('\n')    
     return [sentence.get_text().replace('\n', ' ') for sentence in sentences]
 
+
+
+def get_subfolder_name(directory, rootfolder):
+    firstIndex = directory.index(rootfolder) + len(rootfolder)+1
+    try:
+        secondIndex = directory.index('\\', firstIndex)
+    except:
+        secondIndex = len(directory)
+        
+    return directory[firstIndex:secondIndex]
+
 def extract_multible_xml(args, data, tidy=True):
     '''
     A specify extractor for multible xml files that keep their text in the 's' mark.
@@ -114,6 +126,16 @@ def extract_multible_xml(args, data, tidy=True):
     '''
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
     name = get_subfolder_name(data[0], args.root_name)
+    
+    
+    chunks= list(get_chunks(data, (round(len(data)/args.cores))))
+    
+    print(f'round num {round(len(data)/2)}')
+    for item in chunks:
+        print(f'chunks {len(item)}')
+
+    pool = mp.Pool(len(chunks))
+
 
     list_to_create = []
     for path in data:
@@ -136,37 +158,11 @@ def extract_multible_xml(args, data, tidy=True):
 
         pbar.update()
     filename = '.\outPut\\' + name +'.txt'
-    create_file(list_to_create, filename)
+    create_file(list_to_create, filename, mode='a')
 
-def get_subfolder_name(directory, rootfolder):
-    firstIndex = directory.index(rootfolder) + len(rootfolder)+1
-    try:
-        secondIndex = directory.index('\\', firstIndex)
-    except:
-        secondIndex = len(directory)
-        
-    return directory[firstIndex:secondIndex]
-
-
-def pdf_extractor(filename):
-    #Opens a pdf file and returns the text    
-
-    # creating a pdf file object 
-    pdfFileObj = open(filename, 'rb') 
-    
-    # creating a pdf reader object 
-    pdfReader = PyPDF2.PdfFileReader(pdfFileObj) 
-    
-    # printing number of pages in pdf file 
-    print(pdfReader.numPages) 
-    
-    # creating a page object 
-    pageObj = pdfReader.getPage(0) 
-    
-    # extracting text from page 
-    #rint(pageObj.extractText()) 
-    stringToReturn = pageObj.extractText()
-    
-    # closing the pdf file object 
-    pdfFileObj.close() 
-    return stringToReturn 
+# Create a function called "chunks" with two arguments, l and n:
+def get_chunks(l, n):
+    # For item i in a range that is a length of l,
+    for i in range(0, len(l), n):
+        # Create an index range for l of n items:
+        yield l[i:i+n]
