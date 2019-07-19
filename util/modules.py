@@ -36,7 +36,7 @@ def reynir_tidy_text(data):
     list_to_return = []
 
     if type(data) == list:
-        #print('Tidying list of sentences')
+        print('Tidying list of sentences')
 
         # Initialize Reynir and submit the text as a parse job
         r = Reynir() 
@@ -49,7 +49,7 @@ def reynir_tidy_text(data):
                 list_to_return.append(item.tidy_text)
 
     elif type(data) == str:
-        #print('Tidying a string')
+        print('Tidying a string')
         r = Reynir()
         job = r.submit(data)
         for item in job:
@@ -97,12 +97,14 @@ def extract_multible_xml(args, data, tidy=True):
     '''
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
     name = get_subfolder_name(data[0], args.root_name)
-    
+
     list_to_create = []
     for path in data:
         current_subfolder = get_subfolder_name(path, args.root_name)
         
-        
+        #Compare current subfolder to name. Given that the list_of_file_paths 
+        #is linear this will create files with the names of the subfolder and
+        #then reset the list_to_create      
         if name != current_subfolder:
             filename = '.\outPut\\' + name +'.txt'
             create_file(list_to_create, filename)
@@ -110,17 +112,12 @@ def extract_multible_xml(args, data, tidy=True):
             name = current_subfolder
 
 
-        for item in xml_extractor(path):
-            if tidy:
-                list_to_create.extend(reynir_tidy_text(item))
-            else:
-                list_to_create.append(item)
 
-        #Compare current subfolder to name. Given that the list_of_file_paths 
-        #is linear this will create files with the names of the subfolder and
-        #then reset the list_to_create
+        if tidy:
+            list_to_create.extend(reynir_tidy_text(xml_extractor(path)))
+        else:
+            list_to_create.append(xml_extractor(path))
 
-        #if name == current_subfolder and path 
         pbar.update()
     filename = '.\outPut\\' + name +'.txt'
     create_file(list_to_create, filename)
