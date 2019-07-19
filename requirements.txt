@@ -6,4 +6,3 @@ bs4
 re
 lxml
 argparse
-enlighten
