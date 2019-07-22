@@ -6,22 +6,23 @@ from util.modules import (get_file_directories, reynir_tidy_text,
 parser = create_parser()
 
 def main():
+    #Start a timer
+    timer = Timer()
 
-    #Generate a list of file
-    #list_of_file_paths = get_file_directories(args)
+    #Generate a list of file paths form the driectory hold the xml files
+    list_of_file_paths = get_file_directories(args)
 
     #Exctract the text in these files 
-    #for batch in list_of_file_paths:
-    #extract_multible_xml(args, list_of_file_paths, tidy=False)
+    extract_multible_xml(args, list_of_file_paths)
     
-
-    list_of_file_paths = get_file_directories(args)
-    timer = Timer()
-    clean_multiple_files(args, list_of_file_paths)
+    #Generate a list of file paths from the output of extract_multble_xml
+    new_list_of_file_paths = get_file_directories(args, output_dir=r'.\outPut\raw')
+    
+    print(new_list_of_file_paths)
+    #Clean up and create new txt files.    
+    clean_multiple_files(args, new_list_of_file_paths)
+    
     print(timer.showTimer())
-        
-
-
     print('Finished task')
 
 if __name__ == "__main__":
