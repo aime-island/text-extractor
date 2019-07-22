@@ -4,11 +4,18 @@ import PyPDF2
 from bs4 import BeautifulSoup, SoupStrainer
 import re
 import enlighten
-import objgraph
-import multiprocessing as mp
+from multiprocessing import Pool
+import time
 
 
-
+class Timer():
+    def __init__(self):
+        self.startTime = time.time()
+    
+    def showTimer(self):
+        runtime = round((time.time()-self.startTime)/60, 2)
+        return(f'\nRuntime: {runtime} min\n')
+        
 class Counter():
     def __init__(self):
         self.count_object = 0
@@ -28,10 +35,7 @@ def get_file_directories(args):
         for fname in fileList:
             counter.iterate()
             filepath_list.append(dirName + '\\' + fname)
-
-    #print('-------------------------- objgraph Show growth in file dir --------------------------')
-    #objgraph.show_growth()
-    #print('\n')        
+   
     print(f'Found {counter.show()} files')
     create_file(filepath_list, filename=f'List of file paths for {args.root_name}.txt')
     return filepath_list
@@ -42,11 +46,11 @@ def reynir_tidy_text(data):
     of the sentence, with correct spacing between tokens, and em- and en-dashes 
     substituted for regular hyphens as appropriate. 
     '''
-    #list_to_return = []
+    list_to_return = []
     r = Reynir() 
 
     if type(data) == list:
-        print('Tidying list of sentences')
+        #print('Tidying list of sentences')
 
         # Initialize Reynir and submit the text as a parse job
         for line in data:
@@ -55,16 +59,14 @@ def reynir_tidy_text(data):
             # Iterate through sentences and parse each one
             for item in job:
                 item.parse()
-                yield(item.tidy_text)
-                #list_to_return.append(item.tidy_text)
+                list_to_return.append(item.tidy_text)
 
     elif type(data) == str:
-        print('Tidying a string')
+        #print('Tidying a string')
         job = r.submit(data)
         for item in job:
             item.parse()
-            yield(item.tidy_text)
-            #list_to_return.append(item.tidy_text)
+            list_to_return.append(item.tidy_text)
     else:
         print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
 
@@ -72,7 +74,7 @@ def reynir_tidy_text(data):
     #print('-------------------------- objgraph Show growth  in reynir --------------------------')
     #objgraph.show_growth()
     #print('\n)
-    #return list_to_return
+    return list_to_return
 
 def create_file(list_of_some_variables, filename='output.txt', mode='w'):
     #Save a list to a file. Defult is "output.txt"
@@ -81,15 +83,14 @@ def create_file(list_of_some_variables, filename='output.txt', mode='w'):
         for line in list_of_some_variables:
             file.write(line + '\n')
 
-def open_flie(filename, mode='r'):
+def open_file(filename, mode='r'):
     #Opens a file named and returns a list with irs variables.
     print(f'Opening file: {filename}')
-    #list_to_return =[]
+    list_to_return =[]
     with open(filename, mode, encoding='utf8') as file:
         for line in file:
-            #list_to_return.append(line.rstrip())
-            yield(line.rstrip())
-    #return list_to_return   
+            list_to_return.append(line.rstrip())
+    return list_to_return   
 
 def xml_extractor(file_directory):
     #print(f'Extracting sentences from {file_directory}')
@@ -100,11 +101,7 @@ def xml_extractor(file_directory):
     
     sentences = soup.find_all('s') #Beacause s contains all the sentences 
 
-    #print('-------------------------- objgraph Show growth  in xml ectractor --------------------------')
-    ##objgraph.show_growth()
-    #print('\n')    
     return [sentence.get_text().replace('\n', ' ') for sentence in sentences]
-
 
 
 def get_subfolder_name(directory, rootfolder):
@@ -113,8 +110,9 @@ def get_subfolder_name(directory, rootfolder):
         secondIndex = directory.index('\\', firstIndex)
     except:
         secondIndex = len(directory)
-        
-    return directory[firstIndex:secondIndex]
+
+    name = re.sub('.xml|.txt', '', directory[firstIndex:secondIndex])
+    return name
 
 def extract_multible_xml(args, data, tidy=True):
     '''
@@ -127,29 +125,16 @@ def extract_multible_xml(args, data, tidy=True):
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
     name = get_subfolder_name(data[0], args.root_name)
     
-    '''
-    chunks= list(get_chunks(data, (round(len(data)/args.cores))))
-    
-    print(f'round num {round(len(data)/2)}')
-    for item in chunks:
-        print(f'chunks {len(item)}')
-
-    pool = mp.Pool(len(chunks))
-    jobs = []
-    '''
 
     list_to_create = []
     for path in data:
-        #jobs.append( pool.apply_async(process_wrapper,(nextLineByte)) )
-        #nextLineByte = f.tell()
-
         current_subfolder = get_subfolder_name(path, args.root_name)
         
         #Compare current subfolder to name. Given that the list_of_file_paths 
         #is linear this will create files with the names of the subfolder and
         #then reset the list_to_create      
-        if name != current_subfolder or len(list_to_create) > 50:
-            filename = '.\outPut\\' + name +'.txt'
+        if name != current_subfolder or len(list_to_create) > 1000:
+            filename = '.\outPut\\raw\\' + name +'.txt'
             create_file(list_to_create, filename, mode='a')
             list_to_create = []
             name = current_subfolder
@@ -161,12 +146,57 @@ def extract_multible_xml(args, data, tidy=True):
 
 
         pbar.update()
-    filename = '.\outPut\\' + name +'.txt'
+    filename = '.\outPut\\raw\\' + name +'.txt'
     create_file(list_to_create, filename, mode='a')
 
-# Create a function called "chunks" with two arguments, l and n:
-def get_chunks(l, n):
-    # For item i in a range that is a length of l,
-    for i in range(0, len(l), n):
-        # Create an index range for l of n items:
-        yield l[i:i+n]
+def clean_multiple_files(args, list_of_file_paths):
+    '''
+    Lýsing
+    '''
+    manager = enlighten.get_manager()
+    enterprise = manager.counter(total=len(list_of_file_paths), desc='Processing:')
+
+    name = get_subfolder_name(list_of_file_paths[0], args.root_name)
+    
+    for path in list_of_file_paths:
+
+        name = get_subfolder_name(path, args.root_name)
+        filename = '.\outPut\\clean\\' + name +'-clean.txt'
+        list_to_create = []
+        #chunk = []
+        currCenter = manager.counter(total=get_file_length(path), unit='systems', leave=False)
+        with open(path, encoding='utf-8') as file:
+            for line in file:
+                
+                '''
+                chunk.append(line)
+                if len(chunk) > 40:
+                     
+                    pool = Pool(20)
+                    results = pool.apply_async(reynir_tidy_text, (chunk,)) 
+                    pool.close()
+                    pool.join()
+                    
+                    create_file(results.get(), filename, mode='a') 
+                    chunk = []
+                
+                '''
+                list_to_create.extend(list(reynir_tidy_text(line)))
+                if len(list_to_create) > 40:
+                    create_file(list_to_create, filename, mode='a') 
+                    list_to_create = []
+                
+                currCenter.update()
+            '''    
+            if chunk:
+                pool = Pool(4)
+                results = pool.apply_async(reynir_tidy_text, (chunk,)) 
+                pool.close()
+                pool.join()
+                create_file(results.get(), filename, mode='a') 
+            '''
+        currCenter.close()
+        enterprise.update()
+    enterprise.close()
+def get_file_length(path):
+    return sum(1 for line in open(path, encoding='utf-8'))

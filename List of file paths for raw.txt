@@ -1,0 +1,5 @@
+.\outPut\raw\01 - folder.txt
+.\outPut\raw\02 - folder.txt
+.\outPut\raw\03 - folder.txt
+.\outPut\raw\G-49-6160514.txt
+.\outPut\raw\G-49-6160515.txt
