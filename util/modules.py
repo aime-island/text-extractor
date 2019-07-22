@@ -127,7 +127,7 @@ def extract_multible_xml(args, data, tidy=True):
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
     name = get_subfolder_name(data[0], args.root_name)
     
-    
+    '''
     chunks= list(get_chunks(data, (round(len(data)/args.cores))))
     
     print(f'round num {round(len(data)/2)}')
@@ -135,10 +135,14 @@ def extract_multible_xml(args, data, tidy=True):
         print(f'chunks {len(item)}')
 
     pool = mp.Pool(len(chunks))
-
+    jobs = []
+    '''
 
     list_to_create = []
     for path in data:
+        #jobs.append( pool.apply_async(process_wrapper,(nextLineByte)) )
+        #nextLineByte = f.tell()
+
         current_subfolder = get_subfolder_name(path, args.root_name)
         
         #Compare current subfolder to name. Given that the list_of_file_paths 
@@ -153,7 +157,7 @@ def extract_multible_xml(args, data, tidy=True):
         if tidy:
             list_to_create.extend(reynir_tidy_text(xml_extractor(path)))
         else:
-            list_to_create.append(xml_extractor(path))
+            list_to_create.extend(xml_extractor(path))
 
 
         pbar.update()
