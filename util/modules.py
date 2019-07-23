@@ -169,26 +169,32 @@ def reynir_tidy_text(data):
     '''
     list_to_return = []
     r = Reynir() 
+    try:
+        if type(data) == list:
+            #print('Tidying list of sentences')
 
-    if type(data) == list:
-        #print('Tidying list of sentences')
+            # Initialize Reynir and submit the text as a parse job
+            for line in data:
+                job = r.submit(line)
 
-        # Initialize Reynir and submit the text as a parse job
-        for line in data:
-            job = r.submit(line)
+                # Iterate through sentences and parse each one
+                for item in job:
+                    item.parse()
+                    list_to_return.append(item.tidy_text)
 
-            # Iterate through sentences and parse each one
+        elif type(data) == str:
+            #print('Tidying a string')
+            job = r.submit(data)
             for item in job:
                 item.parse()
                 list_to_return.append(item.tidy_text)
-
-    elif type(data) == str:
-        #print('Tidying a string')
-        job = r.submit(data)
-        for item in job:
-            item.parse()
-            list_to_return.append(item.tidy_text)
-    else:
-        print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
+        else:
+            print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
+    except e:
+        to_return_as_junk =[]
+        to_return_as_junk.extend(data)
+        create_file('.\\outPut\\ErrorCleaningPile.txt', mode='a')
+        to_return_as_junk =[]
+    
 
     return list_to_return
