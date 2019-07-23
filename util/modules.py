@@ -52,14 +52,19 @@ def get_file_directories(args, output_dir=None):
     create_file(filepath_list, filename=f'List of file paths for {root_name}')
     return filepath_list
 
-def create_file(list_of_some_variables, filename='output.txt', mode='w'):
+def create_file(data, filename='output.txt', mode='w'):
     '''
     Save a list to a file. Defult is "output.txt"
     print(f'Writing a file named: {filename}')
     '''
-    with open(filename, mode, encoding='utf8') as file:
-        for line in list_of_some_variables:
-            file.write(line + '\n')
+
+    if type(data) == list:
+        with open(filename, mode, encoding='utf8') as file:
+            for line in data:
+                file.write(line + '\n')
+    else: 
+        with open(filename, mode, encoding='utf8') as file:
+            file.write(data + '\n')
 
 def open_file(filename, mode='r'):
     '''
@@ -144,12 +149,17 @@ def clean_multiple_files(args, list_of_file_paths):
         currCenter = manager.counter(total=get_file_length(path), unit='files', leave=False)
         with open(path, encoding='utf-8') as file:
             for line in file:
+                if len(line) > 600:
+                    file_name =  '.\outPut\\' + name +'-too-long.txt'
+
+                    create_file(line.rstrip(), file_name, mode='a')
                 
-                list_to_create.extend(list(reynir_tidy_text(line)))
-                
-                if len(list_to_create) > 40:
-                    create_file(list_to_create, filename, mode='a') 
-                    list_to_create = []
+                else:
+                    list_to_create.extend(list(reynir_tidy_text(line)))
+
+                    if len(list_to_create) > 1:
+                        create_file(list_to_create, filename, mode='a') 
+                        list_to_create = []
                 
                 currCenter.update()
 
@@ -169,32 +179,26 @@ def reynir_tidy_text(data):
     '''
     list_to_return = []
     r = Reynir() 
-    try:
-        if type(data) == list:
-            #print('Tidying list of sentences')
+    if type(data) == list:
+        #print('Tidying list of sentences')
 
-            # Initialize Reynir and submit the text as a parse job
-            for line in data:
-                job = r.submit(line)
+        # Initialize Reynir and submit the text as a parse job
+        for line in data:
+            job = r.submit(line)
 
-                # Iterate through sentences and parse each one
-                for item in job:
-                    item.parse()
-                    list_to_return.append(item.tidy_text)
-
-        elif type(data) == str:
-            #print('Tidying a string')
-            job = r.submit(data)
+            # Iterate through sentences and parse each one
             for item in job:
                 item.parse()
                 list_to_return.append(item.tidy_text)
-        else:
-            print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
-    except e:
-        to_return_as_junk =[]
-        to_return_as_junk.extend(data)
-        create_file('.\\outPut\\ErrorCleaningPile.txt', mode='a')
-        to_return_as_junk =[]
-    
+
+    elif type(data) == str:
+        #print('Tidying a string')
+        job = r.submit(data)
+        for item in job:
+            item.parse()
+            list_to_return.append(item.tidy_text)
+    else:
+        print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
+
 
     return list_to_return
