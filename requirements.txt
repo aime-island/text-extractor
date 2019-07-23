@@ -6,3 +6,5 @@ bs4
 re
 lxml
 argparse
+time
+enlighten
