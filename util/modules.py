@@ -157,12 +157,13 @@ def clean_multiple_files(args, list_of_file_paths):
                 else:
                     list_to_create.extend(list(reynir_tidy_text(line)))
 
-                    if len(list_to_create) > 1:
+                    if len(list_to_create) > 1000:
                         create_file(list_to_create, filename, mode='a') 
                         list_to_create = []
                 
                 currCenter.update()
-
+        if list_to_create:
+            create_file(list_to_create, filename, mode='a') 
         currCenter.close()
         enterprise.update()
     enterprise.close()

@@ -1,10 +1,7 @@
 # Main requirements
-os
 reynir
 PyPDF2
 bs4
-re
 lxml
 argparse
-time
 enlighten
