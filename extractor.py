@@ -10,17 +10,17 @@ def main():
     timer = Timer()
 
     #Generate a list of file paths form the driectory hold the xml files
-    #list_of_file_paths = get_file_directories(args)
+    list_of_file_paths = get_file_directories(args)
 
     #Exctract the text in these files 
-    #extract_multible_xml(args, list_of_file_paths)
+    extract_multible_xml(args, list_of_file_paths)
     
     #Generate a list of file paths from the output of extract_multble_xml
-    new_list_of_file_paths = get_file_directories(args)
+    #new_list_of_file_paths = get_file_directories(args)
     
-    print(new_list_of_file_paths)
+    #print(new_list_of_file_paths)
     #Clean up and create new txt files.    
-    clean_multiple_files(args, new_list_of_file_paths)
+    #clean_multiple_files(args, new_list_of_file_paths)
     
     print(timer.showTimer())
     print('Finished task')

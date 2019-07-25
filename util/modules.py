@@ -88,6 +88,12 @@ def xml_extractor(file_directory):
 
     return [sentence.get_text().replace('\n', ' ') for sentence in sentences]
 
+def create_directory():
+    if not os.path.exists('.\outPut'):
+        os.makedirs('.\outPut\\raw')
+        os.makedirs('.\outPut\\clean')
+
+
 
 def get_subfolder_name(directory, rootfolder):
     firstIndex = directory.index(rootfolder) + len(rootfolder)+1
@@ -108,6 +114,7 @@ def extract_multible_xml(args, data):
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
     name = get_subfolder_name(data[0], args.root_name)
     
+    create_directory() #Create output directory
 
     list_to_create = []
     for path in data:
@@ -139,11 +146,13 @@ def clean_multiple_files(args, list_of_file_paths):
     manager = enlighten.get_manager()
     enterprise = manager.counter(total=len(list_of_file_paths), desc='Tidying files:')
 
-    name = get_subfolder_name(list_of_file_paths[0], 'raw')
+    create_directory() #Create output directory
+
+    name = get_subfolder_name(list_of_file_paths[0], args.root_name)
     
     for path in list_of_file_paths:
 
-        name = get_subfolder_name(path, 'raw')
+        name = get_subfolder_name(path, args.root_name)
         filename = '.\outPut\\clean\\' + name +'-clean.txt'
         list_to_create = []
         currCenter = manager.counter(total=get_file_length(path), unit='files', leave=False)
