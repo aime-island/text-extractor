@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup, SoupStrainer
 import re
 import enlighten
 import time
+from tokenizer import tokenize, TOK
+from num2words import convert_year
+
 
 
 class Timer():
@@ -28,6 +31,11 @@ class Counter():
     def show(self):
         return self.count_object
 
+def get_root_name(args):
+    index = args.root_dir.rfind('\\')
+    root_name = args.root_dir[index+1:]
+    return root_name
+
 def get_file_directories(args, output_dir=None):
     '''
     Scarapes all files in the rootDir and its subfolders. 
@@ -36,9 +44,8 @@ def get_file_directories(args, output_dir=None):
         directory = output_dir
         root_name = 'cleaning'
     else:
-
         directory = args.root_dir
-        root_name = args.root_name + '.txt'
+        root_name = get_root_name(args) + '.txt'
 
     print(f'Geting list of files form {directory} and its subfolders')
     counter = Counter() 
@@ -46,8 +53,8 @@ def get_file_directories(args, output_dir=None):
     for dirName, _subdirList, fileList in os.walk(directory, topdown=False):
         for fname in fileList:
             counter.iterate()
-            filepath_list.append(dirName + '\\' + fname)
-   
+            filepath_list.append(dirName + '\\' + fname)  
+        
     print(f'Found {counter.show()} files')
     create_file(filepath_list, filename=f'List of file paths for {root_name}')
     return filepath_list
@@ -93,8 +100,6 @@ def create_directory():
         os.makedirs('.\outPut\\raw')
         os.makedirs('.\outPut\\clean')
 
-
-
 def get_subfolder_name(directory, rootfolder):
     firstIndex = directory.index(rootfolder) + len(rootfolder)+1
     try:
@@ -111,14 +116,15 @@ def extract_multible_xml(args, data):
     The function extracts text form mulitble files and exports .txt files that have the names of the 
     subfolders in rootfolder.
     '''
+    root_name = get_root_name(args)
     pbar = enlighten.Counter(total=len(data), desc='Extracting files') 
-    name = get_subfolder_name(data[0], args.root_name)
-    
+    name = get_subfolder_name(data[0], root_name)
+
     create_directory() #Create output directory
 
     list_to_create = []
     for path in data:
-        current_subfolder = get_subfolder_name(path, args.root_name)
+        current_subfolder = get_subfolder_name(path, root_name)
         
         #Compare current subfolder to name. Given that the list_of_file_paths 
         #is linear this will create files with the names of the subfolder and
@@ -137,22 +143,22 @@ def extract_multible_xml(args, data):
     filename = '.\outPut\\raw\\' + name +'.txt'
     create_file(list_to_create, filename, mode='a')
 
-
 def clean_multiple_files(args, list_of_file_paths):
     '''
     Takes in a list of files and args and generates new files that have been cleand
     using reynir. 
     '''
+    root_name = get_root_name(args)
     manager = enlighten.get_manager()
     enterprise = manager.counter(total=len(list_of_file_paths), desc='Tidying files:')
 
     create_directory() #Create output directory
 
-    name = get_subfolder_name(list_of_file_paths[0], args.root_name)
+    name = get_subfolder_name(list_of_file_paths[0], root_name)
     
     for path in list_of_file_paths:
 
-        name = get_subfolder_name(path, args.root_name)
+        name = get_subfolder_name(path, root_name)
         filename = '.\outPut\\clean\\' + name +'-clean.txt'
         list_to_create = []
         currCenter = manager.counter(total=get_file_length(path), unit='files', leave=False)
@@ -212,3 +218,18 @@ def reynir_tidy_text(data):
 
 
     return list_to_return
+
+def fixNumsAbbrive(sentence, args):
+    print(sentence)
+    for token in tokenize(sentence):
+
+        if type(token.val) == list and args.abbr:
+            sentence = sentence.replace(token.txt, token.val[0][0])
+
+        if TOK.descr[token.kind] == 'YEAR':
+            sentence = sentence.replace(str(token.val), convert_year(token.val))
+            print(token.txt)
+            print(token.val)
+            
+    return sentence
+

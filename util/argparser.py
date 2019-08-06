@@ -9,9 +9,11 @@ def create_parser():
 
     parser.add_argument(
         '--root_dir', required=False, type=str, help='path to folder')
+    
     parser.add_argument(
-        '--root_name', required=False, type=str, help='name of rootfolder in dir')
+        '--abbr', required=False, type=str, help='Change abbriviations ex. m.a. will be meðal annars')
+
     parser.add_argument(
-        '--cores', default= 2, required=False, type=int, help='how many cores to use, default 2')
+        '--nums', required=False, type=str, help='Change numbers ex. 123 will be hundrað tuttugu og þrír')
 
     return parser

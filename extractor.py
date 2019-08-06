@@ -8,12 +8,12 @@ parser = create_parser()
 def main():
     #Start a timer
     timer = Timer()
-
+    
     #Generate a list of file paths form the driectory hold the xml files
     list_of_file_paths = get_file_directories(args)
 
     #Exctract the text in these files 
-    extract_multible_xml(args, list_of_file_paths)
+    #extract_multible_xml(args, list_of_file_paths)
     
     #Generate a list of file paths from the output of extract_multble_xml
     #new_list_of_file_paths = get_file_directories(args)
