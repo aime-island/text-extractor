@@ -6,7 +6,7 @@ import re
 import enlighten
 import time
 from tokenizer import tokenize, TOK
-from num2words import convert_year
+from util.num2words import convert_year_to_words
 
 
 
@@ -220,16 +220,12 @@ def reynir_tidy_text(data):
     return list_to_return
 
 def fixNumsAbbrive(sentence, args):
-    print(sentence)
     for token in tokenize(sentence):
-
         if type(token.val) == list and args.abbr:
             sentence = sentence.replace(token.txt, token.val[0][0])
 
-        if TOK.descr[token.kind] == 'YEAR':
-            sentence = sentence.replace(str(token.val), convert_year(token.val))
-            print(token.txt)
-            print(token.val)
+        if TOK.descr[token.kind] == 'YEAR' and args.nums:
+            sentence = sentence.replace(str(token.val), convert_year_to_words(token.val))
             
     return sentence
 
