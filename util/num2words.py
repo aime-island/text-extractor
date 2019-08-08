@@ -2,7 +2,7 @@ import math
 
 conjunction = "og"
         
-tens_power = ['hundrað', 'þúsund'] 
+tens_power = ['hundrað', 'þúsund', 'hundruð'] 
 
 tens_multiple = ['', '','tuttugu', 'þrjátíu', 'fjörutíu',
                 'fimmtíu', 'sextíu', 'sjötíu', 
@@ -42,21 +42,23 @@ def add_conjunction(num, listWords):
 
 # given number in words  
 def convert_year_to_words(num): 
-    # Get number of digits 
-    # in given number
+    
+    #max year is 9999
+    if int(num) > 9999:
+        return False    
+
     num = str(num)
     orgNum = num 
     l = len(num)
     i = int(num)
-    print(f'num is {num}')
-    print(f'l is {l}')
+
   
     # Base cases  
     if (l == 0): 
-        return 'empty string'
+        return False
   
     if (l > 4): 
-        return 'Length more than 4 is not supported'
+        return False
     
     # For single digit number  
     if (l == 1):
@@ -66,20 +68,26 @@ def convert_year_to_words(num):
     words= []  
     while (0 < len(num)):
         l = len(num)
+
         is_dev = is_devisable(num)
         if is_dev != False:
-            print('is_dev')
-            print(is_dev)
             words.append(is_dev)
             break
+        
+        if 2000 > int(num) > 1000:
+            #print(f'Hérna {num}')
+            words.append(two_digits[int(num[1])] + 
+                        ' ' + tens_power[2])
+            num = num[2:]
+            l = len(num)
 
         if l == 4:
-            print('l === 4')
+            #print('l === 4')
             words.append(single_digits_fem[int(num[0])] +
                 ' ' + tens_power[1])
 
         if l == 3:
-            print('l == 3')
+            #print('l == 3')
             if num[0] == '0':
                 pass
             else: 
@@ -87,8 +95,7 @@ def convert_year_to_words(num):
                     ' ' + tens_power[0])
 
         if l == 2:
-            print('l == 2')
-
+            #print('l == 2')
             if num[0] == '0':
                 words.append(single_digits_fem[int(num[1])])
                 break
@@ -101,14 +108,12 @@ def convert_year_to_words(num):
                 break
 
         if l == 1:
-            print('l == 1')
+            #print('l == 1')
             words.append(single_digits[int(num[0])])
             break
 
         num = num[1:]
-        print(f'num er {num}')
-    print(f'words er {words}')
-        
+       
         
     return add_conjunction(orgNum, words)
 

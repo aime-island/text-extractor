@@ -36,16 +36,18 @@ def get_root_name(args):
     root_name = args.root_dir[index+1:]
     return root_name
 
-def get_file_directories(args, output_dir=None):
+def get_file_directories(args, from_where=None):
     '''
-    Scarapes all files in the rootDir and its subfolders. 
+    Takes in a folder directory and outputs a txt file and list with
+    directories to all the file in that folder and its subfolder.
     '''
-    if output_dir:
-        directory = output_dir
-        root_name = 'cleaning'
+    if from_where:
+        directory = from_where
+        root_name = from_where +'.txt'
+
     else:
         directory = args.root_dir
-        root_name = get_root_name(args) + '.txt'
+        root_name = get_root_name(args)+'.txt'
 
     print(f'Geting list of files form {directory} and its subfolders')
     counter = Counter() 
@@ -129,24 +131,100 @@ def extract_multible_xml(args, data):
         #Compare current subfolder to name. Given that the list_of_file_paths 
         #is linear this will create files with the names of the subfolder and
         #then reset the list_to_create      
-        if name != current_subfolder or len(list_to_create) > 50:
+        if name != current_subfolder or len(list_to_create) > 500:
             filename = '.\outPut\\raw\\' + name +'.txt'
             create_file(list_to_create, filename, mode='a')
             list_to_create = []
             name = current_subfolder
 
-       
         list_to_create.extend(xml_extractor(path))
-
-
+    
         pbar.update()
+
     filename = '.\outPut\\raw\\' + name +'.txt'
     create_file(list_to_create, filename, mode='a')
+    
+def get_file_length(path):
+    return sum(1 for line in open(path, encoding='utf-8'))
 
-def clean_multiple_files(args, list_of_file_paths):
+def normalization(sentence, args):
+    for token in tokenize(sentence):
+        if type(token.val) == list and args.abbr:
+            sentence = sentence.replace(token.txt, token.val[0][0])
+
+        if TOK.descr[token.kind] == 'YEAR' and args.nums:
+            new_year = convert_year_to_words(token.val)
+            
+            if new_year != False:
+                sentence = sentence.replace(str(token.val), new_year)
+            else:
+                print(f'Eitthvað að með árið: {token.val}' )
+                #útfæra eitthvað hérna
+
+        if TOK.descr[token.kind] == 'ORDINAL':
+            print(token.val)
+            print(TOK.descr[token.kind])
+            print(token.txt)
+
+    return sentence
+
+def pick_apart_goose(s):
+    first = True
+    w = ''
+    for letter in s:
+        if letter == '"' and first:
+            w = w + (' „')
+            first = False
+        elif letter == '"' and not first:
+            w = w + ('“ ')
+            first = True
+        else:
+            w = w + letter
+    return w
+
+def between_years(s):
+    for w in s.split():
+        if re.match('[0-9]+ *- *[0-9]+', w):
+            s = re.sub('-', ' til ', s)
+    return s
+
+def clean_text_from_xml(s):
+    #s = re.sub(r'\n', ' ', s)
+    s = re.sub('[\„|\“|\"]', '"', s)
+    if re.search('.*".*"', s):
+        s = pick_apart_goose(s)
+    if re.search('[0-9]+(-)[0-9]+', s):
+        s = between_years(s)
+    s = re.sub('\s\. ', '.', s)
+    s = re.sub('\s\$ ', '$', s)
+    s = re.sub('\‘', '\'', s)
+    s = re.sub('\s\?', '?', s)
+    s = re.sub('\s\%', '%', s)
+    s = re.sub('\s\!', '!', s)
+    s = re.sub('\s\:', ':', s)
+    s = re.sub('\s,', ',', s)
+    s = re.sub('^\s', '', s)
+    s = re.sub('\s\;', ';', s)
+    s = re.sub('\(\s', '(', s)
+    s = re.sub('\s\)', ')', s)
+    s = re.sub('\s\/\s', '/', s)
+    s = re.sub('\[\s', '[', s)
+    s = re.sub('\s\]', ']', s)
+    s = re.sub('\s\*', '*', s)
+    s = re.sub('\'\s|\s\´', '\'', s)
+    s = re.sub('\'\'', '', s)
+    s = re.sub('\s$', '', s)
+    s = re.sub('\s\-', '-', s)
+    s = re.sub('\„\s', '„', s)
+    s = re.sub('\s\“', '“', s)
+    s = re.sub('\s\@', '@', s)
+    s = re.sub('\s+', ' ', s)
+    return s
+
+
+def clean_text_from_xml_multiple(args, list_of_file_paths):
     '''
-    Takes in a list of files and args and generates new files that have been cleand
-    using reynir. 
+    Takes in a list of files and args and generates new files. 
     '''
     root_name = get_root_name(args)
     manager = enlighten.get_manager()
@@ -164,68 +242,14 @@ def clean_multiple_files(args, list_of_file_paths):
         currCenter = manager.counter(total=get_file_length(path), unit='files', leave=False)
         with open(path, encoding='utf-8') as file:
             for line in file:
-                if len(line) > 600:
-                    file_name =  '.\outPut\\' + name +'-too-long.txt'
-
-                    create_file(line.rstrip(), file_name, mode='a')
-                
-                else:
-                    list_to_create.extend(list(reynir_tidy_text(line)))
-
-                    if len(list_to_create) > 1000:
-                        create_file(list_to_create, filename, mode='a') 
-                        list_to_create = []
+                list_to_create.append(clean_text_from_xml(line))
+                if len(list_to_create) > 1000:
+                    create_file(list_to_create, filename, mode='a') 
+                    list_to_create = []
                 
                 currCenter.update()
         if list_to_create:
             create_file(list_to_create, filename, mode='a') 
         currCenter.close()
         enterprise.update()
-    enterprise.close()
-    
-    
-def get_file_length(path):
-    return sum(1 for line in open(path, encoding='utf-8'))
-
-def reynir_tidy_text(data):
-    '''
-    Takes a list or a string and returns a list of str with a text representation 
-    of the sentence, with correct spacing between tokens, and em- and en-dashes 
-    substituted for regular hyphens as appropriate. 
-    '''
-    list_to_return = []
-    r = Reynir() 
-    if type(data) == list:
-        #print('Tidying list of sentences')
-
-        # Initialize Reynir and submit the text as a parse job
-        for line in data:
-            job = r.submit(line)
-
-            # Iterate through sentences and parse each one
-            for item in job:
-                item.parse()
-                list_to_return.append(item.tidy_text)
-
-    elif type(data) == str:
-        #print('Tidying a string')
-        job = r.submit(data)
-        for item in job:
-            item.parse()
-            list_to_return.append(item.tidy_text)
-    else:
-        print('reynir_tidy_text only takes a list or a string\nFor this blasphemy I return you a empty list')
-
-
-    return list_to_return
-
-def fixNumsAbbrive(sentence, args):
-    for token in tokenize(sentence):
-        if type(token.val) == list and args.abbr:
-            sentence = sentence.replace(token.txt, token.val[0][0])
-
-        if TOK.descr[token.kind] == 'YEAR' and args.nums:
-            sentence = sentence.replace(str(token.val), convert_year_to_words(token.val))
-            
-    return sentence
-
+    enterprise.close()    
