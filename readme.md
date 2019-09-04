@@ -1,4 +1,4 @@
-Text extractor that extracts text from xml files and manipulates them so they can be used on the voice web
+Text extractor that extracts text from xml files and manipulates them so they can be used on the voice web and helps students study for homework assignments 
 
 
 To use:
