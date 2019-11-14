@@ -1,10 +1,11 @@
 import math
+import re
 
 conjunction = "og"
         
 tens_power = ['hundrað', 'þúsund', 'hundruð'] 
 
-tens_multiple = ['', '','tuttugu', 'þrjátíu', 'fjörutíu',
+tens_multiple = ['', 'tíu','tuttugu', 'þrjátíu', 'fjörutíu',
                 'fimmtíu', 'sextíu', 'sjötíu', 
                 'áttatíu', 'níutíu']
 
@@ -22,12 +23,12 @@ single_digits_fem = ['núll', "eitt", "tvö", "þrjú",
 
 def is_devisable(num):
     i = int(num)
-    if i % 1000 == 0:
+    if i % 1000 == 0 and len(num) == 4:
         return (single_digits_fem[int(num[0])] + ' ' + tens_power[1])
-    if i % 100 == 0:
+    if i % 100 == 0 and len(num) == 3:
         return (single_digits_fem[int(num[0])] + ' ' + tens_power[0])
-    if i % 10 == 0:
-        return two_digits[1]
+    if i % 10 == 0 and len(num) == 2:
+        return tens_multiple[int(num[0])]
     else: 
         return False
 
@@ -35,36 +36,34 @@ def add_conjunction(num, listWords):
     l = len(num)
     if l > 1 and is_devisable(num) == False and num not in two_digits:
         listWords[-1:-1] = ['og']
- 
 
     return (' '.join(listWords)) 
 
 
 # given number in words  
-def convert_year_to_words(num): 
-    
-    #max year is 9999
-    if int(num) > 9999:
-        return False    
-
-    num = str(num)
+def convert_numbers_to_words(num, is_year=False): 
+    num = str(num).lower()
     orgNum = num 
+
+    before_christ = False
+
+    if 'f.kr' in num and is_year:
+        num = re.sub('\s*f\.kr\.\s*', '', num)
+        before_christ = True
+    else:
+        before_christ = False
     l = len(num)
     i = int(num)
 
-  
     # Base cases  
-    if (l == 0): 
+    if (l == 0) or (l > 4):
         return False
-  
-    if (l > 4): 
-        return False
-    
+          
     # For single digit number  
     if (l == 1):
         return single_digits_fem[i]
         
-    # Iterate while num is not '\0'
+    # Iterate while num is not 
     words= []  
     while (0 < len(num)):
         l = len(num)
@@ -74,7 +73,7 @@ def convert_year_to_words(num):
             words.append(is_dev)
             break
         
-        if 2000 > int(num) > 1000:
+        if 2000 > int(num) > 1000 and is_year == True:
             #print(f'Hérna {num}')
             words.append(two_digits[int(num[1])] + 
                         ' ' + tens_power[2])
@@ -114,8 +113,16 @@ def convert_year_to_words(num):
 
         num = num[1:]
        
-        
-    return add_conjunction(orgNum, words)
+    if before_christ:
+        return add_conjunction(orgNum, words) + ' fyrir krist'
+    else:
+        return add_conjunction(orgNum, words)
 
 
+'''
+Test
 
+s ='101 f.kr.'
+
+print(convert_numbers_to_words(s, is_year=True))
+'''

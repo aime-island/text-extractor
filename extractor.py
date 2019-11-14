@@ -1,7 +1,7 @@
 from util.argparser import create_parser
-from util.modules import (get_file_directories, reynir_tidy_text,
-    create_file, open_file, extract_multible_xml, normalization, 
-    Counter, Timer, clean_text_from_xml_multiple)
+from util.modules import (call_extract_multible_xml,
+    Counter, Timer, call_xml_cleaner, call_nomrmalization_functions, 
+    call_segregation, create_directory, call_combiner, segregation_for_language_model)
 
 
 parser = create_parser()
@@ -9,17 +9,30 @@ parser = create_parser()
 def main():
     #Start a timer
     timer = Timer()
+    create_directory()
 
-    #Generate a list of file paths from the output of extract_multble_xml
-    list_of_file_paths = get_file_directories(args)
+    #call_extract_multible_xml(args)
 
-    extract_multible_xml(args, list_of_file_paths)
+    #Clean up and create new txt files. Takes in 
+    #raw send into clean
+    #args.input_dir = r'.\data\05 - raw'
+    call_xml_cleaner(args)  
 
-    #Generate a list of file paths from the output of extract_multble_xml
-    list_of_file_paths = get_file_directories(args, from_where='./outPut/raw')
-    print(list_of_file_paths)
-    #Clean up and create new txt files.    
-    clean_text_from_xml_multiple(args, list_of_file_paths)
+
+    #Cleaning numbers abbrivitaions and other stuff. Takes in 
+    #clean sends to normalized
+    args.input_dir = r'.\data\04 - clean'
+    call_nomrmalization_functions(args)
+    
+
+    #Segregat into a group to use and not to use. Takes in
+    #normalized sends into keep/notToKeep
+    args.input_dir = r'.\data\03 - normalized'
+    call_segregation(args)
+    
+
+    args.input_dir = r'.\data\01 - Keep'
+    call_combiner(args)
 
     print(timer.showTimer())
     print('Finished task')

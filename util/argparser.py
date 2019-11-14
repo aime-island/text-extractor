@@ -8,10 +8,10 @@ def create_parser():
         formatter_class=argparse.MetavarTypeHelpFormatter)
 
     parser.add_argument(
-        '--root_dir', required=False, type=str, help='path to folder')
+        '--input_dir', required=False, type=str, help='path to folder')
     
     parser.add_argument(
-        '--abbr', required=False, type=bool, default=True, help='Change abbriviations ex. m.a. will be meðal annars')
+        '--lm', required=False, type=bool, default=False, help='Working with a language model')
 
     parser.add_argument(
         '--nums', required=False, type=bool, default=True, help='Change numbers ex. 123 will be hundrað tuttugu og þrír')
